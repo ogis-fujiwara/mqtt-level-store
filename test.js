@@ -40,6 +40,24 @@ describe('mqtt level store manager', function () {
   })
 })
 
+describe('mqtt level store manager close', function () {
+  var manager
+
+  beforeEach(function () {
+    manager = mqttLevelStore({ level: level() })
+  })
+  it('should call callback function when successfully closed.', function (done) {
+    manager.close(done)
+  })
+  it('should throw Error when failed to close.', function (done) {
+    try {
+      manager.close(done)
+    } catch (error) {
+      done()
+    }
+  })
+})
+
 describe('mqtt.connect flow', function () {
   var server
   var manager

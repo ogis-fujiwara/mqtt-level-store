@@ -146,10 +146,22 @@ function Manager (path, options) {
 Manager.single = Store
 
 Manager.prototype.close = function (done) {
-  this.incoming.close()
-  this.outgoing.close()
-  this._sublevel.close()
-  this._level.close(done)
+  var count = 4
+  var f = function () {
+    count--
+  }
+
+  this.incoming.close(f)
+  this.outgoing.close(f)
+  this._sublevel.close(f)
+  this._level.close(f)
+
+  var timerId = setInterval(function () {
+    if (count === 0) {
+      clearInterval(timerId)
+      done()
+    }
+  }, 10)
 }
 
 module.exports = Manager
