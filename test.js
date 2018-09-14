@@ -9,6 +9,7 @@ var mqtt = require('mqtt')
 var Connection = require('mqtt-connection')
 var concat = require('concat-stream')
 var net = require('net')
+var should = require('should')
 
 describe('mqtt level store', function () {
   abstractTest(function (done) {
@@ -41,20 +42,41 @@ describe('mqtt level store manager', function () {
 })
 
 describe('mqtt level store manager close', function () {
-  var manager
-
-  beforeEach(function () {
-    manager = mqttLevelStore({ level: level() })
-  })
-  it('should call callback function when successfully closed.', function (done) {
+  it('should finish successfully.', function (done) {
+    var manager = mqttLevelStore({ level: level() })
     manager.close(done)
   })
-  it('should throw Error when failed to close.', function (done) {
-    try {
-      manager.close(done)
-    } catch (error) {
-      done()
+
+  it('should return errors when failed to close.', function (done) {
+    var errorManager = mqttLevelStore({ level: level() })
+
+    var incomingClose = errorManager.incoming.close
+    var outgoingClose = errorManager.outgoing.close
+    var subLevelClose = errorManager._sublevel.close
+    var levelClose = errorManager._level.close
+
+    var errorClose = function (cb, suffix) {
+      var f = function (err) { cb(err) }
+      f('error_' + suffix)
     }
+
+    errorManager.incoming.close = function (cb) { errorClose(cb, 'i') }
+    errorManager.outgoing.close = function (cb) { errorClose(cb, 'o') }
+    errorManager._sublevel.close = function (cb) { errorClose(cb, 's') }
+    errorManager._level.close = function (cb) { errorClose(cb, 'l') }
+
+    var expected = {'incoming': 'error_i', 'outgoing': 'error_o', 'sublevel': 'error_s', 'level': 'error_l'}
+    errorManager.close(function (err) {
+      should.deepEqual(err, expected)
+      errorManager.incoming.close = incomingClose
+      errorManager.outgoing.close = outgoingClose
+      errorManager._sublevel.close = subLevelClose
+      errorManager._level.close = levelClose
+      errorManager.close(function (err) {
+        should.not.exist(err)
+        done()
+      })
+    })
   })
 })
 
