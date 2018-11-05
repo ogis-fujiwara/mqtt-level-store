@@ -111,6 +111,7 @@ Store.prototype.del = function (packet, cb) {
 
 Store.prototype.createStream = function () {
   var opts = this._levelOpts
+  opts.highWaterMark = 1
   opts.keys = false
   opts.lt = 'packet-by-date~\xff'
   opts.gt = 'packet-by-date~'
